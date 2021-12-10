@@ -1,0 +1,106 @@
+name: CD dev - build and run unit test
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  job1:
+    name: Build & Run unit test 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '12.x'
+      - name: Run command npm install
+        run: npm install --production
+      - name: Run command npm test
+        run: npm test
+      # - name: Run command yarn install
+      #   run: yarn install
+      # - name: Run command yarn test
+      #   run: yarn test
+
+  job2:
+    name: Notify Test Result - Case Success
+    needs: job1
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Send message to Slack API in test Succss
+        uses: archive/github-actions-slack@v2.0.0
+        id: notify-success
+        with:
+          slack-bot-user-oauth-access-token: ${{ secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN }}
+          slack-channel: C02EJ47HK4N  # It's sender-api channal id
+          slack-text: | 
+            Hello everyone! :wave: 
+            :green_circle: new event: [${{ github.event_name }}] 
+            :green_circle: repository: [${{ github.repository }}] 
+            :green_circle: enviroment: Development 🤓
+            :green_circle: test result: Succsseded ✅
+            :heavy_check_mark: :heavy_check_mark: :heavy_check_mark: :heavy_check_mark:
+            pushing to remote hosting is running :arrows_counterclockwise: 
+
+      - name: Result from "Send Message to slack"
+        run: echo "The result was ${{ steps.notify-success.outputs.slack-result }}"
+
+      - name: Send Message to Discord API channel in test Success
+        env:
+          DISCORD_WEBHOOK: https://discordapp.com/api/webhooks/891436789477277696/Eoa5IGrOq09jRzmm44_33v5RTc_jrOO9X7P97qEalrZy41cxV5hON-QN4tWuvhxRUIjy
+        uses: Ilshidur/action-discord@0.3.2
+        with:
+          args: | 
+            Hello everyone! :wave: 
+            :green_circle: new event: [${{ github.event_name }}] 
+            :green_circle: repository: [${{ github.repository }}] 
+            :green_circle: enviroment: Development 🤓
+            :green_circle: test result: Succsseded ✅
+            :heavy_check_mark: :heavy_check_mark: :heavy_check_mark: :heavy_check_mark:
+            pushing to remote hosting is running :arrows_counterclockwise: 
+
+          
+
+  job3:
+      name: Notify Test Result - Case Failure
+      needs: job1
+      runs-on: ubuntu-latest
+      if: failure()
+      steps:
+        - name: Send message to Slack API in test failure
+          uses: archive/github-actions-slack@v2.0.0
+          id: notify-failure
+          with:
+            slack-bot-user-oauth-access-token: ${{ secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN }}
+            slack-channel: C02EJ47HK4N  # It's sender-api channal id
+            slack-text: | 
+              Hello everyone! :wave: 
+              :green_circle: new event: [${{ github.event_name }}] 
+              :green_circle: repository: [${{ github.repository }}] 
+              :green_circle: enviroment: Development 🤓
+              :red_circle: test result: failed 🚨
+              :x: :x: :x: :x:
+              pushing to remote hosting canceled :no_entry: ,
+              developers need some action to fix the test failure
+
+        - name: Result from "Send Message to slack"
+          run: echo "The result was ${{ steps.notify-failure.outputs.slack-result }}"
+
+        - name: Send Message to Discord API channel in test failure
+          env:
+            DISCORD_WEBHOOK: https://discordapp.com/api/webhooks/891436789477277696/Eoa5IGrOq09jRzmm44_33v5RTc_jrOO9X7P97qEalrZy41cxV5hON-QN4tWuvhxRUIjy
+          uses: Ilshidur/action-discord@0.3.2
+          with:
+            args: | 
+              Hello everyone! :wave: 
+              :green_circle: new event: [${{ github.event_name }}] 
+              :green_circle: repository: [${{ github.repository }}] 
+              :green_circle: enviroment: Development 🤓
+              :red_circle: test result: failed 🚨
+              :x: :x: :x: :x:
+              pushing to remote hosting canceled :no_entry: ,
+              developers need some action to fix the test failure
+            
+
